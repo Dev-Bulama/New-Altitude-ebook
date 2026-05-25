@@ -61,6 +61,15 @@ class SkillScore_Ebook_Admin_Settings {
             'skillscore-ebook-downloads',
             array($this, 'render_downloads_page')
         );
+
+        add_submenu_page(
+            'edit.php?post_type=ebook',
+            __('Bulk Inquiries', 'skillscore-ebook'),
+            __('Bulk Inquiries', 'skillscore-ebook'),
+            'manage_options',
+            'skillscore-ebook-bulk-inquiries',
+            array($this, 'render_bulk_inquiries_page')
+        );
     }
 
     /**
@@ -101,6 +110,16 @@ class SkillScore_Ebook_Admin_Settings {
         register_setting('skillscore_ebook_voice', 'skillscore_ebook_piper_model');
         register_setting('skillscore_ebook_voice', 'skillscore_ebook_coqui_api_url');
         register_setting('skillscore_ebook_voice', 'skillscore_ebook_ffmpeg_path');
+
+        // Checkout features settings
+        register_setting('skillscore_ebook_checkout', 'skillscore_ebook_enable_bulk_inquiry');
+        register_setting('skillscore_ebook_checkout', 'skillscore_ebook_bulk_notification_email');
+        register_setting('skillscore_ebook_checkout', 'skillscore_ebook_bulk_min_copies');
+        register_setting('skillscore_ebook_checkout', 'skillscore_ebook_enable_order_bump');
+        register_setting('skillscore_ebook_checkout', 'skillscore_ebook_order_bump_name');
+        register_setting('skillscore_ebook_checkout', 'skillscore_ebook_order_bump_price');
+        register_setting('skillscore_ebook_checkout', 'skillscore_ebook_order_bump_desc');
+        register_setting('skillscore_ebook_checkout', 'skillscore_ebook_enable_dynamic_button');
     }
 
     /**
@@ -128,6 +147,10 @@ class SkillScore_Ebook_Admin_Settings {
                    class="nav-tab <?php echo $active_tab === 'voice' ? 'nav-tab-active' : ''; ?>">
                     <?php _e('Voice Preview', 'skillscore-ebook'); ?>
                 </a>
+                <a href="?post_type=ebook&page=skillscore-ebook-settings&tab=checkout"
+                   class="nav-tab <?php echo $active_tab === 'checkout' ? 'nav-tab-active' : ''; ?>">
+                    <?php _e('Checkout Features', 'skillscore-ebook'); ?>
+                </a>
             </h2>
 
             <form method="post" action="options.php">
@@ -144,6 +167,10 @@ class SkillScore_Ebook_Admin_Settings {
                     case 'voice':
                         settings_fields('skillscore_ebook_voice');
                         $this->render_voice_settings();
+                        break;
+                    case 'checkout':
+                        settings_fields('skillscore_ebook_checkout');
+                        $this->render_checkout_settings();
                         break;
                 }
                 submit_button();
@@ -466,6 +493,261 @@ class SkillScore_Ebook_Admin_Settings {
                 </td>
             </tr>
         </table>
+        <?php
+    }
+
+    /**
+     * Render checkout features settings.
+     */
+    private function render_checkout_settings() {
+        ?>
+        <h2><?php _e('Bulk Inquiry Form', 'skillscore-ebook'); ?></h2>
+        <p class="description" style="margin-bottom: 15px;">
+            <?php _e('Allow institutional buyers (schools, organizations, events) to submit bulk copy inquiries instead of going through individual checkout.', 'skillscore-ebook'); ?>
+        </p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><?php _e('Enable Bulk Inquiry Form', 'skillscore-ebook'); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="skillscore_ebook_enable_bulk_inquiry" value="1"
+                               <?php checked(get_option('skillscore_ebook_enable_bulk_inquiry'), '1'); ?> />
+                        <?php _e('Show a purchase type toggle on the checkout page so buyers can choose between individual purchase and bulk/institutional inquiry', 'skillscore-ebook'); ?>
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><?php _e('Bulk Inquiry Notification Email', 'skillscore-ebook'); ?></th>
+                <td>
+                    <input type="email" name="skillscore_ebook_bulk_notification_email"
+                           value="<?php echo esc_attr(get_option('skillscore_ebook_bulk_notification_email', get_option('admin_email'))); ?>"
+                           class="regular-text" />
+                    <p class="description"><?php _e('Email address to receive new bulk inquiry notifications. Defaults to site admin email.', 'skillscore-ebook'); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><?php _e('Minimum Copies for Bulk', 'skillscore-ebook'); ?></th>
+                <td>
+                    <input type="number" name="skillscore_ebook_bulk_min_copies"
+                           value="<?php echo esc_attr(get_option('skillscore_ebook_bulk_min_copies', 10)); ?>"
+                           class="small-text" min="1" />
+                    <p class="description"><?php _e('Minimum number of copies that qualifies as a bulk inquiry.', 'skillscore-ebook'); ?></p>
+                </td>
+            </tr>
+        </table>
+
+        <hr>
+
+        <h2><?php _e('Order Bump / Add-On', 'skillscore-ebook'); ?></h2>
+        <p class="description" style="margin-bottom: 15px;">
+            <?php _e('Show an optional companion product add-on during individual checkout (e.g. the 90-Day No Excuse Journal).', 'skillscore-ebook'); ?>
+        </p>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><?php _e('Enable Order Bump', 'skillscore-ebook'); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="skillscore_ebook_enable_order_bump" value="1"
+                               <?php checked(get_option('skillscore_ebook_enable_order_bump'), '1'); ?> />
+                        <?php _e('Show an optional add-on product on the checkout form', 'skillscore-ebook'); ?>
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><?php _e('Add-On Product Name', 'skillscore-ebook'); ?></th>
+                <td>
+                    <input type="text" name="skillscore_ebook_order_bump_name"
+                           value="<?php echo esc_attr(get_option('skillscore_ebook_order_bump_name', '90-Day No Excuse Journal, Discussion & Reflection Guide')); ?>"
+                           class="regular-text" />
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><?php _e('Add-On Price', 'skillscore-ebook'); ?></th>
+                <td>
+                    <input type="number" name="skillscore_ebook_order_bump_price"
+                           value="<?php echo esc_attr(get_option('skillscore_ebook_order_bump_price', '0.00')); ?>"
+                           class="small-text" min="0" step="0.01" />
+                    <p class="description"><?php _e('Price of the add-on product in the store currency. Set to 0 to hide the price.', 'skillscore-ebook'); ?></p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row"><?php _e('Add-On Description', 'skillscore-ebook'); ?></th>
+                <td>
+                    <textarea name="skillscore_ebook_order_bump_desc" rows="3" class="large-text"><?php echo esc_textarea(get_option('skillscore_ebook_order_bump_desc', 'Take the book deeper with the companion guide designed for personal reflection, reading groups, leadership cohorts, and serious discussion.')); ?></textarea>
+                </td>
+            </tr>
+        </table>
+
+        <hr>
+
+        <h2><?php _e('Dynamic Button Text', 'skillscore-ebook'); ?></h2>
+        <table class="form-table">
+            <tr>
+                <th scope="row"><?php _e('Enable Dynamic Button Text', 'skillscore-ebook'); ?></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="skillscore_ebook_enable_dynamic_button" value="1"
+                               <?php checked(get_option('skillscore_ebook_enable_dynamic_button'), '1'); ?> />
+                        <?php _e('Change the submit button text based on selected format (e.g. "GET INSTANT ACCESS" for eBook, "COMPLETE MY ORDER" for Printed)', 'skillscore-ebook'); ?>
+                    </label>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    /**
+     * Render bulk inquiries admin page.
+     */
+    public function render_bulk_inquiries_page() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'skillscore_bulk_inquiries';
+
+        // Check table exists
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table'") !== $table) {
+            echo '<div class="wrap"><h1>' . __('Bulk Inquiries', 'skillscore-ebook') . '</h1>';
+            echo '<div class="notice notice-info"><p>' . __('No bulk inquiries yet. The table will be created once the first inquiry is submitted.', 'skillscore-ebook') . '</p></div></div>';
+            return;
+        }
+
+        // Handle status update
+        if (isset($_POST['update_inquiry_status']) && isset($_POST['inquiry_id']) && check_admin_referer('update_inquiry_' . $_POST['inquiry_id'])) {
+            $inquiry_id = intval($_POST['inquiry_id']);
+            $new_status = sanitize_text_field($_POST['inquiry_status']);
+            if (in_array($new_status, array('new', 'reviewed', 'responded', 'closed'))) {
+                $wpdb->update($table, array('status' => $new_status), array('id' => $inquiry_id), array('%s'), array('%d'));
+                echo '<div class="notice notice-success is-dismissible"><p>Inquiry #' . $inquiry_id . ' status updated.</p></div>';
+            }
+        }
+
+        // Pagination
+        $per_page = 20;
+        $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+        $offset = ($current_page - 1) * $per_page;
+        $total = $wpdb->get_var("SELECT COUNT(*) FROM $table");
+        $total_pages = ceil($total / $per_page);
+
+        $inquiries = $wpdb->get_results($wpdb->prepare(
+            "SELECT i.*, p.post_title as ebook_title
+             FROM $table i
+             LEFT JOIN {$wpdb->posts} p ON i.ebook_id = p.ID
+             ORDER BY i.created_at DESC
+             LIMIT %d OFFSET %d",
+            $per_page, $offset
+        ));
+
+        $status_colors = array(
+            'new'       => '#dc2626',
+            'reviewed'  => '#d97706',
+            'responded' => '#2563eb',
+            'closed'    => '#16a34a',
+        );
+        ?>
+        <div class="wrap">
+            <h1><?php _e('Bulk Inquiries', 'skillscore-ebook'); ?>
+                <span class="title-count" style="background: #EAB308; color: #000; font-size: 13px; padding: 2px 8px; border-radius: 3px; margin-left: 10px;"><?php echo intval($total); ?></span>
+            </h1>
+
+            <?php if (empty($inquiries)) : ?>
+                <div class="notice notice-info"><p><?php _e('No bulk inquiries received yet.', 'skillscore-ebook'); ?></p></div>
+            <?php else : ?>
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th><?php _e('Contact', 'skillscore-ebook'); ?></th>
+                        <th><?php _e('Organization', 'skillscore-ebook'); ?></th>
+                        <th><?php _e('Copies', 'skillscore-ebook'); ?></th>
+                        <th><?php _e('Ebook', 'skillscore-ebook'); ?></th>
+                        <th><?php _e('Status', 'skillscore-ebook'); ?></th>
+                        <th><?php _e('Date', 'skillscore-ebook'); ?></th>
+                        <th><?php _e('Actions', 'skillscore-ebook'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($inquiries as $inq) :
+                        $status = $inq->status ?: 'new';
+                        $color = $status_colors[$status] ?? '#666';
+                    ?>
+                    <tr>
+                        <td><strong><?php echo intval($inq->id); ?></strong></td>
+                        <td>
+                            <strong><?php echo esc_html($inq->contact_name); ?></strong><br>
+                            <a href="mailto:<?php echo esc_attr($inq->contact_email); ?>"><?php echo esc_html($inq->contact_email); ?></a>
+                            <?php if ($inq->contact_phone) : ?>
+                                <br><small><?php echo esc_html($inq->contact_phone); ?></small>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <strong><?php echo esc_html($inq->org_name); ?></strong><br>
+                            <small style="color: #666;"><?php echo esc_html($inq->org_type); ?></small>
+                        </td>
+                        <td style="text-align: center; font-size: 20px; font-weight: 700;"><?php echo intval($inq->copies_needed); ?></td>
+                        <td><?php echo esc_html($inq->ebook_title ?: 'Unknown'); ?></td>
+                        <td>
+                            <span style="background: <?php echo esc_attr($color); ?>; color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase;">
+                                <?php echo esc_html($status); ?>
+                            </span>
+                        </td>
+                        <td><?php echo esc_html(date('M j, Y', strtotime($inq->created_at))); ?></td>
+                        <td>
+                            <button class="button button-small" onclick="document.getElementById('inq-detail-<?php echo intval($inq->id); ?>').style.display = document.getElementById('inq-detail-<?php echo intval($inq->id); ?>').style.display === 'none' ? 'table-row' : 'none'">
+                                View Details
+                            </button>
+                        </td>
+                    </tr>
+                    <tr id="inq-detail-<?php echo intval($inq->id); ?>" style="display: none; background: #f9f9f9;">
+                        <td colspan="8" style="padding: 20px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 900px;">
+                                <div>
+                                    <h4 style="margin: 0 0 10px;"><?php _e('Purpose / Use Case', 'skillscore-ebook'); ?></h4>
+                                    <p style="background: #fff; padding: 12px; border: 1px solid #ddd; border-radius: 4px;"><?php echo nl2br(esc_html($inq->purpose)); ?></p>
+                                    <?php if ($inq->notes) : ?>
+                                        <h4 style="margin: 10px 0;"><?php _e('Additional Notes', 'skillscore-ebook'); ?></h4>
+                                        <p style="background: #fff; padding: 12px; border: 1px solid #ddd; border-radius: 4px;"><?php echo nl2br(esc_html($inq->notes)); ?></p>
+                                    <?php endif; ?>
+                                </div>
+                                <div>
+                                    <h4 style="margin: 0 0 10px;"><?php _e('Update Status', 'skillscore-ebook'); ?></h4>
+                                    <form method="post">
+                                        <?php wp_nonce_field('update_inquiry_' . $inq->id); ?>
+                                        <input type="hidden" name="inquiry_id" value="<?php echo intval($inq->id); ?>">
+                                        <select name="inquiry_status" style="margin-right: 10px; padding: 5px;">
+                                            <option value="new" <?php selected($status, 'new'); ?>>New</option>
+                                            <option value="reviewed" <?php selected($status, 'reviewed'); ?>>Reviewed</option>
+                                            <option value="responded" <?php selected($status, 'responded'); ?>>Responded</option>
+                                            <option value="closed" <?php selected($status, 'closed'); ?>>Closed</option>
+                                        </select>
+                                        <input type="submit" name="update_inquiry_status" class="button button-primary" value="Update">
+                                    </form>
+                                    <br>
+                                    <a href="mailto:<?php echo esc_attr($inq->contact_email); ?>?subject=Re: Your bulk inquiry for <?php echo esc_attr($inq->ebook_title); ?>" class="button button-secondary">
+                                        Reply via Email
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+
+            <?php if ($total_pages > 1) : ?>
+            <div class="tablenav bottom" style="margin-top: 15px;">
+                <div class="tablenav-pages">
+                    <?php
+                    echo paginate_links(array(
+                        'base'      => add_query_arg('paged', '%#%'),
+                        'format'    => '',
+                        'current'   => $current_page,
+                        'total'     => $total_pages,
+                    ));
+                    ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            <?php endif; ?>
+        </div>
         <?php
     }
 

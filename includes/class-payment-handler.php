@@ -25,7 +25,11 @@ class SkillScore_Ebook_Payment_Handler {
         
         // NEW: Shipping status update handler
         add_action('wp_ajax_skillscore_update_shipping_status', array($this, 'update_shipping_status'));
-        
+
+        // Bulk inquiry handlers (public + admin)
+        add_action('wp_ajax_skillscore_submit_bulk_inquiry', array($this, 'submit_bulk_inquiry'));
+        add_action('wp_ajax_nopriv_skillscore_submit_bulk_inquiry', array($this, 'submit_bulk_inquiry'));
+
         // Webhook handler
         add_action('init', array($this, 'handle_payment_webhook'));
         
@@ -50,6 +54,9 @@ class SkillScore_Ebook_Payment_Handler {
         
         // NEW: Auto-add format and shipping columns if missing
         $this->add_format_shipping_columns();
+
+        // Ensure bulk inquiries table exists
+        $this->create_bulk_inquiries_table();
     }
 
     /**
@@ -381,6 +388,132 @@ switch ($gateway) {
         }
 
         return $purchase_id;
+    }
+
+    /**
+     * Create bulk inquiries table
+     */
+    private function create_bulk_inquiries_table() {
+        global $wpdb;
+        $charset_collate = $wpdb->get_charset_collate();
+        $table = $wpdb->prefix . 'skillscore_bulk_inquiries';
+
+        $sql = "CREATE TABLE IF NOT EXISTS $table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            ebook_id bigint(20) NOT NULL DEFAULT 0,
+            contact_name varchar(255) NOT NULL,
+            contact_email varchar(100) NOT NULL,
+            contact_phone varchar(50) DEFAULT NULL,
+            org_name varchar(255) NOT NULL,
+            org_type varchar(100) NOT NULL,
+            copies_needed int(11) NOT NULL DEFAULT 0,
+            purpose text NOT NULL,
+            notes text DEFAULT NULL,
+            status varchar(50) NOT NULL DEFAULT 'new',
+            created_at datetime NOT NULL,
+            PRIMARY KEY (id),
+            KEY contact_email (contact_email),
+            KEY status (status),
+            KEY ebook_id (ebook_id)
+        ) $charset_collate;";
+
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
+    }
+
+    /**
+     * AJAX: Submit bulk inquiry
+     */
+    public function submit_bulk_inquiry() {
+        check_ajax_referer('skillscore_ebook_nonce', 'nonce');
+
+        $ebook_id      = isset($_POST['ebook_id'])      ? intval($_POST['ebook_id'])                        : 0;
+        $contact_name  = isset($_POST['contact_name'])  ? sanitize_text_field($_POST['contact_name'])       : '';
+        $contact_email = isset($_POST['contact_email']) ? sanitize_email($_POST['contact_email'])           : '';
+        $contact_phone = isset($_POST['contact_phone']) ? sanitize_text_field($_POST['contact_phone'])      : '';
+        $org_name      = isset($_POST['org_name'])      ? sanitize_text_field($_POST['org_name'])           : '';
+        $org_type      = isset($_POST['org_type'])      ? sanitize_text_field($_POST['org_type'])           : '';
+        $copies_needed = isset($_POST['copies_needed']) ? intval($_POST['copies_needed'])                   : 0;
+        $purpose       = isset($_POST['purpose'])       ? sanitize_textarea_field($_POST['purpose'])        : '';
+        $notes         = isset($_POST['notes'])         ? sanitize_textarea_field($_POST['notes'])          : '';
+
+        // Validate required fields
+        if (!$contact_name || !$contact_email || !$org_name || !$org_type || !$copies_needed || !$purpose) {
+            wp_send_json_error(array('message' => 'Please fill in all required fields.'));
+            return;
+        }
+
+        if (!is_email($contact_email)) {
+            wp_send_json_error(array('message' => 'Please enter a valid email address.'));
+            return;
+        }
+
+        $min_copies = intval(get_option('skillscore_ebook_bulk_min_copies', 10));
+        if ($copies_needed < $min_copies) {
+            wp_send_json_error(array('message' => 'Minimum copies for a bulk inquiry is ' . $min_copies . '.'));
+            return;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'skillscore_bulk_inquiries';
+
+        $inserted = $wpdb->insert(
+            $table,
+            array(
+                'ebook_id'      => $ebook_id,
+                'contact_name'  => $contact_name,
+                'contact_email' => $contact_email,
+                'contact_phone' => $contact_phone,
+                'org_name'      => $org_name,
+                'org_type'      => $org_type,
+                'copies_needed' => $copies_needed,
+                'purpose'       => $purpose,
+                'notes'         => $notes,
+                'status'        => 'new',
+                'created_at'    => current_time('mysql'),
+            ),
+            array('%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s')
+        );
+
+        if (!$inserted) {
+            wp_send_json_error(array('message' => 'Unable to save your inquiry. Please try again.'));
+            return;
+        }
+
+        $inquiry_id = $wpdb->insert_id;
+        $ebook      = get_post($ebook_id);
+        $ebook_title = $ebook ? $ebook->post_title : 'the book';
+
+        // Send notification email to admin
+        $notify_email = get_option('skillscore_ebook_bulk_notification_email', get_option('admin_email'));
+        $admin_subject = 'New Bulk Inquiry #' . $inquiry_id . ' — ' . $contact_name . ' (' . $org_name . ')';
+        $admin_body = "A new bulk inquiry has been submitted.\n\n"
+            . "Inquiry #: {$inquiry_id}\n"
+            . "Contact: {$contact_name} <{$contact_email}>\n"
+            . ($contact_phone ? "Phone: {$contact_phone}\n" : '')
+            . "Organization: {$org_name} ({$org_type})\n"
+            . "Copies Needed: {$copies_needed}\n"
+            . "Book: {$ebook_title}\n\n"
+            . "Purpose / Use Case:\n{$purpose}\n\n"
+            . ($notes ? "Additional Notes:\n{$notes}\n\n" : '')
+            . "View all inquiries: " . admin_url('edit.php?post_type=ebook&page=skillscore-ebook-bulk-inquiries') . "\n";
+        wp_mail($notify_email, $admin_subject, $admin_body);
+
+        // Send auto-response to the inquiry submitter
+        $first_name = explode(' ', trim($contact_name))[0];
+        $user_subject = 'We received your ' . $ebook_title . ' inquiry.';
+        $user_body = "Hello {$first_name},\n\n"
+            . "Thank you for your interest in {$ebook_title}. We have received your inquiry regarding bulk copies, sponsored distribution, or program-based use, and we appreciate your interest.\n\n"
+            . "This book was written not merely as a retail title, but as a tool for confronting excuse culture, weak thinking, misguided faith, passive leadership, and the internal habits that keep both individuals and Africa stagnant. That is why it works powerfully in youth programs, leadership spaces, entrepreneurship communities, civic and educational settings, conferences, and other serious environments.\n\n"
+            . "Our team will review your inquiry and follow up with the next step as soon as possible. Depending on your request, that may include bulk pricing, sponsored distribution options, event use, or a conversation about fit and scale.\n\n"
+            . "Thank you again for your interest.\n\n"
+            . "Best,\nAltitude Within\n" . get_bloginfo('url');
+        wp_mail($contact_email, $user_subject, $user_body);
+
+        wp_send_json_success(array(
+            'message'    => 'Your inquiry has been received. We will be in touch soon.',
+            'inquiry_id' => $inquiry_id,
+        ));
     }
 
     /**
