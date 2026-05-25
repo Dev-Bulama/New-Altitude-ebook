@@ -1,0 +1,201 @@
+/**
+ * SkillScore Ebook Commerce - Admin Styles
+ *
+ * @package SkillScore_Ebook
+ */
+
+/* Meta Box Styling */
+.ebook-file-info {
+    padding: 15px;
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.ebook-file-info ul {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+}
+
+.ebook-file-info ul li {
+    padding: 5px 0;
+    color: #0c4a6e;
+}
+
+.ebook-file-upload-form {
+    padding: 15px;
+    background-color: #fef3c7;
+    border: 1px dashed #fbbf24;
+    border-radius: 4px;
+}
+
+.ebook-sales-stats {
+    padding: 15px;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+}
+
+.ebook-sales-stats p {
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+/* Order Status Colors */
+.order-status {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.order-status.status-completed {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.order-status.status-pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.order-status.status-failed {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Settings Page */
+.skillscore-settings-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.skillscore-settings-header h1 {
+    margin: 0;
+}
+
+.nav-tab-wrapper {
+    margin-bottom: 20px;
+}
+
+/* Form Tables */
+.form-table th {
+    width: 200px;
+    vertical-align: top;
+    padding-top: 15px;
+}
+
+.form-table td {
+    padding: 10px;
+}
+
+.form-table input[type="text"],
+.form-table input[type="password"],
+.form-table input[type="number"],
+.form-table select {
+    width: 400px;
+    max-width: 100%;
+}
+
+/* Voice Upload Section */
+.voice-upload-section {
+    background-color: #fef3c7;
+    border: 1px solid #fbbf24;
+    border-radius: 4px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.voice-upload-section h3 {
+    margin-top: 0;
+    color: #92400e;
+}
+
+/* Downloads Table */
+.wp-list-table.downloads-table td {
+    vertical-align: middle;
+}
+
+.wp-list-table.downloads-table .revoked {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.wp-list-table.downloads-table .active {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+/* Notifications */
+.notice.skillscore-notice {
+    border-left-width: 4px;
+    padding: 12px;
+}
+
+.notice.skillscore-notice.notice-warning {
+    border-left-color: #f59e0b;
+}
+
+.notice.skillscore-notice.notice-success {
+    border-left-color: #10b981;
+}
+
+/* Button Styles */
+.button.button-yellow {
+    background-color: #eab308;
+    border-color: #ca8a04;
+    color: #fff;
+}
+
+.button.button-yellow:hover {
+    background-color: #ca8a04;
+    border-color: #a16207;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .form-table th,
+    .form-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .form-table input[type="text"],
+    .form-table input[type="password"],
+    .form-table input[type="number"],
+    .form-table select {
+        width: 100%;
+    }
+}
+
+/* Dashboard Widget */
+.skillscore-dashboard-widget {
+    padding: 15px;
+}
+
+.skillscore-dashboard-widget .stat-box {
+    display: inline-block;
+    padding: 15px;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    margin: 5px;
+    min-width: 150px;
+}
+
+.skillscore-dashboard-widget .stat-box .stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #eab308;
+    display: block;
+}
+
+.skillscore-dashboard-widget .stat-box .stat-label {
+    font-size: 14px;
+    color: #6b7280;
+    display: block;
+}
