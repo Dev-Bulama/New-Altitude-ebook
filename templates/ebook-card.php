@@ -15,15 +15,15 @@ if (!defined('ABSPATH')) {
      style="background: #1A1A1A; border-radius: 12px; overflow: hidden; transition: all 0.3s; border: 2px solid transparent;">
     
     <!-- Book Cover -->
-    <a href="<?php echo esc_url(get_permalink($ebook_id)); ?>" 
-       style="display: block; position: relative; overflow: hidden; background: #0D0D0D;">
+    <a href="<?php echo esc_url(get_permalink($ebook_id)); ?>"
+       style="display: block; position: relative; overflow: hidden; background: #0D0D0D; aspect-ratio: 2 / 3;">
         <?php if (has_post_thumbnail($ebook_id)) : ?>
-            <?php echo get_the_post_thumbnail($ebook_id, 'medium', array(
-                'style' => 'width: 100%; height: 350px; object-fit: cover; transition: transform 0.3s;',
+            <?php echo get_the_post_thumbnail($ebook_id, 'large', array(
+                'style' => 'width: 100%; height: 100%; object-fit: contain; display: block; transition: transform 0.3s;',
                 'class' => 'ebook-card-image'
             )); ?>
         <?php else : ?>
-            <div style="width: 100%; height: 350px; display: flex; align-items: center; justify-content: center; background: #2A2A2A;">
+            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #2A2A2A;">
                 <span style="color: #666; font-size: 48px;">📚</span>
             </div>
         <?php endif; ?>
@@ -74,27 +74,3 @@ if (!defined('ABSPATH')) {
 
 </div>
 
-<style>
-    /* Card Hover Effect */
-    .skillscore-ebook-card:hover {
-        border-color: #EAB308 !important;
-        transform: translateY(-4px);
-        box-shadow: 0 8px 30px rgba(234, 179, 8, 0.2);
-    }
-
-    /* Image Zoom on Hover */
-    .skillscore-ebook-card:hover .ebook-card-image {
-        transform: scale(1.05);
-    }
-
-    /* Button Hover */
-    .btn-buy-card:hover {
-        background: #FCD34D !important;
-        box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3);
-    }
-
-    /* Title Hover */
-    .skillscore-ebook-card h3 a:hover {
-        color: #EAB308 !important;
-    }
-</style>

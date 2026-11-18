@@ -25,10 +25,14 @@ class SkillScore_Campaign_Scheduler {
 
     /**
      * Constructor
+     *
+     * @param SkillScore_Email_Campaign|null $campaign_manager Reuse existing instance to avoid duplicate hooks
      */
-    public function __construct() {
-        // Initialize campaign manager
-        $this->campaign_manager = new SkillScore_Email_Campaign();
+    public function __construct($campaign_manager = null) {
+        // Reuse passed instance or create a new one (passed instance avoids duplicate action hooks)
+        $this->campaign_manager = $campaign_manager instanceof SkillScore_Email_Campaign
+            ? $campaign_manager
+            : new SkillScore_Email_Campaign();
 
         // Schedule cron on activation
         add_action('wp', array($this, 'schedule_cron_event'));

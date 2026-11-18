@@ -71,9 +71,9 @@ require_once SKILLSCORE_EBOOK_PLUGIN_DIR . 'includes/class-campaign-admin-page.p
 
         // Sample generator
         add_action('admin_menu', array('SkillScore_Sample_Generator', 'register_admin_page'));
-        // Email campaign system
-new SkillScore_Email_Campaign();
-new SkillScore_Campaign_Scheduler();
+        // Email campaign system — pass instance to scheduler to prevent duplicate action hooks
+$email_campaign = new SkillScore_Email_Campaign();
+new SkillScore_Campaign_Scheduler($email_campaign);
 new SkillScore_Campaign_Metabox();
 new SkillScore_Campaign_Admin_Page();
     }

@@ -165,10 +165,10 @@ class SkillScore_Email_Campaign {
         global $wpdb;
 
         $campaigns = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$this->campaigns_table} 
-            WHERE ebook_id = %d 
-            AND is_active = 1 
-            ORDER BY scheduled_datetime ASC",
+            "SELECT * FROM {$this->campaigns_table}
+            WHERE ebook_id = %d
+            AND is_active = 1
+            ORDER BY delay_value ASC",
             $ebook_id
         ));
 
