@@ -539,11 +539,8 @@ class SkillScore_Email_Campaign {
             return false;
         }
 
-        // Build download URL with campaign tracking
-        $download_url = add_query_arg(array(
-            'skillscore_download' => $purchase->download_token,
-            'campaign_id' => $log_entry->campaign_id
-        ), home_url());
+        // Direct download link
+        $download_url = 'https://altitudewithin.com/wp-content/uploads/2026/05/90-DAY-JOURNAL.pdf';
 
         // Prepare placeholders
         $placeholders = array(
